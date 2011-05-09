@@ -2,19 +2,8 @@
 
 class LiarliarSolver
 
-	class Accusation
-		attr_reader :accuser, :accusee
-
-		def initialize accuser, accusee
-			@accuser = accuser
-			@accusee = accusee
-		end
-
-		def to_s
-			"'%s' '%s'" % [accuser, accusee]
-		end
-	end
-
+	GROUP1 = 3
+	GROUP2 = 4
 
 	def initialize filename
 		@filename = filename
@@ -35,15 +24,20 @@ class LiarliarSolver
 
 	def count_groups
 		group1_count = 0
+		group2_count = 0
 		@graph.each do |person, group|
-			if group == 3
+			if group == GROUP1
 				group1_count += 1
+			elsif group == GROUP2
+				group2_count += 1
+			else
+				throw 'unexpected'
 			end
 		end
 
-		group2_count = @graph.count - group1_count
 		counts = [group1_count, group2_count]
-		counts.sort!.reverse!
+		counts = counts.sort
+		counts = counts.reverse
 
 		@solution = counts
 	end
@@ -51,11 +45,35 @@ class LiarliarSolver
 	def seed_graph
 		g = @graph
 		@accusations.each_key do |accusation|
-			g[accusation.accuser] = 3
-			g[accusation.accusee] = 4
+			g[accusation[0]] = GROUP1
+			g[accusation[1]] = GROUP2
 			@accusations.delete accusation
 			return
 		end
+	end
+
+	def link_accuser accuser, accusee
+		g = @graph
+
+		if !g.has_key? accuser
+			if !g.has_key? accusee
+				return false
+			else
+				temp = accusee
+				accusee = accuser
+				accuser = temp
+			end
+		end
+
+		if g[accuser] == GROUP1
+			g[accusee] = GROUP2
+		elsif g[accuser] == GROUP2
+			g[accusee] = GROUP1
+		else
+			raise 'unexpected'
+		end
+
+		true
 	end
 
 	def build_accusationgraph
@@ -64,25 +82,14 @@ class LiarliarSolver
 		while !@accusations.empty? do
 			g = @graph
 			@accusations.each_key do |accusation|
-				accuser = accusation.accuser
-				accusee = accusation.accusee
-				if !g.has_key? accuser
-					if !g.has_key? accusee
-						next
-					elsif g[accusee] == 3
-						g[accuser] = 4
-					elsif g[accusee] == 4
-						g[accuser] = 3
-					end
-				elsif g[accuser] == 4
-					g[accusee] = 3
-				elsif g[accuser] == 3
-					g[accusee] = 4
-				else
-					throw 'unexpected'
-				end
+				accuser = accusation[0]
+				accusee = accusation[1]
 
-				@accusations.delete accusation
+				success = link_accuser accuser, accusee
+
+				if success
+					@accusations.delete accusation
+				end
 			end
 		end
 	end
@@ -110,9 +117,9 @@ class LiarliarSolver
 		num_accusations = accuser_info[1].to_i
 
 		num_accusations.times do
-			accusee = file.gets.rstrip!
-			accusation = Accusation.new accuser, accusee
-			@accusations[accusation] = nil
+			accusee = file.gets.split[0]
+			accusation = [accuser, accusee]
+			@accusations[accusation] = 1
 		end
 	end
 
