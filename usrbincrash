@@ -1,0 +1,75 @@
+#!/usr/bin/env ruby
+
+class Sku
+  attr_reader :label, :weight, :cost
+
+  def initialize label, weight, cost
+    @label = label
+    @weight = weight
+    @cost = cost
+  end
+  
+  def to_s
+    '%s w:%i c:%i' % [@label, @weight, @cost]
+  end
+end
+
+class LeastCostCalculator
+
+  def initialize
+    @skus = Array.new
+    read_input
+  end
+
+  def read_input
+    file = File.new(ARGV[0], "r")
+
+    line = file.gets.strip
+    @weight_target = line.to_i
+
+    while true
+      line = file.gets
+
+      break if line == nil || line.length <= 5
+
+      line = line.strip.split
+      sku = Sku.new line[0], line[1].to_i, line[2].to_i
+      @skus.push sku
+    end
+  end
+	
+  def calculate
+    infinity = 1.0/0
+    least_cost = min_value_for_weight @weight_target, 0, infinity
+    least_cost
+  end
+	
+  def min_value_for_weight weight_target, current_cost, best_cost
+    if current_cost >= best_cost
+      return nil
+    end
+	  
+    if weight_target <= 0
+      return current_cost
+    end
+	  
+    @skus.each do |sku|
+      this_weight = weight_target - sku.weight
+      this_cost = current_cost + sku.cost
+      cost = min_value_for_weight this_weight, this_cost, best_cost
+    
+      if cost != nil
+        best_cost = cost
+      end
+    end
+    
+    best_cost
+  end
+end
+
+def find_least_cost
+  calc = LeastCostCalculator.new
+  calc.calculate
+end
+
+puts find_least_cost

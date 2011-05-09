@@ -1,0 +1,90 @@
+#!/usr/bin/env ruby
+
+class Engineer
+	attr_reader :drink_pref
+
+	def initialize drink_pref
+		@drink_pref = drink_pref
+	end
+
+	def to_s
+		rank = ''
+	  @drink_pref.each do |drink|
+			rank = rank + drink.to_s + ' '
+		end
+
+		rank
+	end
+end
+
+class Drink
+	attr_reader :name
+	
+	def initialize name
+		@name = name	
+	end
+
+	def to_s
+		@name
+	end
+end
+
+class OptimalPairingCalculator
+	
+	def initialize
+		@drinks = Array.new
+		@engineers = Array.new
+		parse_input
+		print_input
+	end
+
+	def print_input
+		@drinks.each do |drink|
+			puts drink
+		end
+
+		@engineers.each do |engineer|
+			puts engineer
+		end
+	end
+
+	def parse_input
+		file = File.new ARGV[0], "r"
+		line = file.gets.strip.split
+		number_of_engineers = line[0].to_i
+		number_of_drinks = line[1].to_i
+
+		(1..number_of_drinks).each do	
+			line = file.gets
+		  
+			drink_name = line.slice line.index(/\s/), line.length
+			drink_name = drink_name.strip
+			@drinks.push Drink.new drink_name
+	  end
+
+		(1..number_of_engineers).each do
+			line = file.gets
+
+			drink_pref = line.slice line.index(/\s/), line.length
+			drink_pref = drink_pref.strip
+			drink_pref = drink_pref.split ','
+
+			rank = Array.new
+			drink_pref.each do |drink_number|
+				rank.push drink_number
+			end
+
+			@engineers.push Engineer.new rank
+		end
+	end
+
+	def calculate
+		matrix = Array.new
+		matrix[0][0] = 0
+		puts matrix[0][0].to_s
+	end
+
+end
+
+calculator = OptimalPairingCalculator.new
+calculator.calculate

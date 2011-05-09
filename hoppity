@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+def get_input file_name
+  file = File.new(file_name, "r")
+  line = file.gets
+  line = line.strip
+  input_number = line.to_i
+  input_number
+end
+
+def print_hoppity number
+  div_by_3 = number % 3 == 0 ? true : false
+  div_by_5 = number % 5 == 0 ? true : false
+  
+  if div_by_5 && div_by_3
+    puts 'Hop'
+  elsif div_by_3
+    puts 'Hoppity'
+  elsif div_by_5
+    puts 'Hophop'
+  end
+end
+
+def print_sequence
+  max_number = get_input ARGV[0]
+  
+  (1..max_number).each do |number|
+    print_hoppity number
+  end
+end
+
+print_sequence
