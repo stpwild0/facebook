@@ -18,30 +18,58 @@ class LiarliarSolver
 
 	def initialize filename
 		@filename = filename
-		@accusations = Array.new
+		@accusations = Hash.new
 		@graph = Hash.new
 	end
 
 	def solve
 		parse_input
+		print_accusations
 		build_accusationgraph
 	end
 
-	def build_accusationgraph
+	def seed_graph
 		g = @graph
-		accusation = @accusations.pop
+		@accusations.each_key do |accusation|
+			g[accusation.accuser] = true
+			g[accusation.accusee] = false
+			@accusations.delete accusation
+			return
+		end
+	end
 
+	def build_accusationgraph
+		seed_graph
+
+		while !@accusations.empty? do
+			g = @graph
+			@accusations.each_key do |accusation|
+				accuser = accusation.accuser
+				accusee = accusation.accusee
+				if !g.has_key? accuser
+					next
+				elsif g[accuser] == true
+					g[accusee] = false
+				elsif g[accuser] == false
+					g[accuser] = true
+				else
+					throw 'unexpected'
+				end
+
+				@accusations.delete accusation
+			end
+		end
 	end
 
 	def print_accusations
-		@accusations.each do |accusation|
+		@accusations.each_key do |accusation|
 			puts accusation.to_s
 		end
 	end
 
 	def parse_input
 		file = File.new @filename, 'r'
-		
+
 		num_accusers = file.gets 
 		num_accusers = num_accusers.to_i
 
@@ -58,7 +86,7 @@ class LiarliarSolver
 		num_accusations.times do
 			accusee = file.gets
 			accusation = Accusation.new accuser, accusee
-			@accusations.push accusation
+			@accusations[accusation] = nil
 		end
 	end
 
