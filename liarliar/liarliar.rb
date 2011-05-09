@@ -11,7 +11,7 @@ class LiarliarSolver
 		end
 
 		def to_s
-			"%s %s" % [accuser, accusee]
+			"'%s' '%s'" % [accuser, accusee]
 		end
 	end
 
@@ -31,8 +31,8 @@ class LiarliarSolver
 	def seed_graph
 		g = @graph
 		@accusations.each_key do |accusation|
-			g[accusation.accuser] = true
-			g[accusation.accusee] = false
+			g[accusation.accuser] = 3
+			g[accusation.accusee] = 4
 			@accusations.delete accusation
 			return
 		end
@@ -48,10 +48,10 @@ class LiarliarSolver
 				accusee = accusation.accusee
 				if !g.has_key? accuser
 					next
-				elsif g[accuser] == true
-					g[accusee] = false
-				elsif g[accuser] == false
-					g[accuser] = true
+				elsif g[accuser] == 4
+					g[accusee] = 3
+				elsif g[accuser] == 3
+					g[accusee] = 4
 				else
 					throw 'unexpected'
 				end
@@ -84,7 +84,7 @@ class LiarliarSolver
 		num_accusations = accuser_info[1].to_i
 
 		num_accusations.times do
-			accusee = file.gets
+			accusee = file.gets.rstrip!
 			accusation = Accusation.new accuser, accusee
 			@accusations[accusation] = nil
 		end
