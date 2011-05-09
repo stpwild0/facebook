@@ -24,8 +24,28 @@ class LiarliarSolver
 
 	def solve
 		parse_input
-		print_accusations
 		build_accusationgraph
+		count_groups
+		print_solution
+	end
+
+	def print_solution
+		puts "%d %d" % [@solution[0], @solution[1]]
+	end
+
+	def count_groups
+		group1_count = 0
+		@graph.each do |person, group|
+			if group == 3
+				group1_count += 1
+			end
+		end
+
+		group2_count = @graph.count - group1_count
+		counts = [group1_count, group2_count]
+		counts.sort!.reverse!
+
+		@solution = counts
 	end
 
 	def seed_graph
@@ -47,7 +67,13 @@ class LiarliarSolver
 				accuser = accusation.accuser
 				accusee = accusation.accusee
 				if !g.has_key? accuser
-					next
+					if !g.has_key? accusee
+						next
+					elsif g[accusee] == 3
+						g[accuser] = 4
+					elsif g[accusee] == 4
+						g[accuser] = 3
+					end
 				elsif g[accuser] == 4
 					g[accusee] = 3
 				elsif g[accuser] == 3
