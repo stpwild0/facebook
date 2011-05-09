@@ -2,9 +2,6 @@
 
 class LiarliarSolver
 
-	GROUP1 = 3
-	GROUP2 = 4
-
 	def initialize filename
 		@filename = filename
 		@accusations = Hash.new
@@ -12,91 +9,48 @@ class LiarliarSolver
 	end
 
 	def solve
+		reset_counters
 		parse_input
-		build_accusationgraph
-		count_groups
-		print_solution
+		first_accuser = seed_graph
+		fill_graph first_accuser
 	end
 
-	def print_solution
-		puts "%d %d" % [@solution[0], @solution[1]]
+	def reset_counters
+		@group1 = 0
+		@group2 = 0
 	end
 
-	def count_groups
-		group1_count = 0
-		group2_count = 0
-		@graph.each do |person, group|
-			if group == GROUP1
-				group1_count += 1
-			elsif group == GROUP2
-				group2_count += 1
-			else
-				throw 'unexpected'
-			end
+	def build_graph
+		@accusations.each do |accuser, accusees|
+			@graph[accuser] = :group1
+			@group1 += 1
+			@accusations.delete accuser
+
+			return accuser
 		end
-
-		counts = [group1_count, group2_count]
-		counts = counts.sort
-		counts = counts.reverse
-
-		@solution = counts
 	end
 
-	def seed_graph
-		g = @graph
-		@accusations.each_key do |accusation|
-			g[accusation[0]] = GROUP1
-			g[accusation[1]] = GROUP2
-			@accusations.delete accusation
+	def fill_graph accuser
+		if !@graph.has_key? accuser
 			return
 		end
-	end
 
-	def link_accuser accuser, accusee
-		g = @graph
-
-		if !g.has_key? accuser
-			if !g.has_key? accusee
-				return false
-			else
-				temp = accusee
-				accusee = accuser
-				accuser = temp
-			end
+		accusees = @graph[accuser]
+		accusees.each do |accusee|
+			link accuser, accusee
 		end
 
-		if g[accuser] == GROUP1
-			g[accusee] = GROUP2
-		elsif g[accuser] == GROUP2
-			g[accusee] = GROUP1
-		else
-			raise 'unexpected'
-		end
-
-		true
-	end
-
-	def build_accusationgraph
-		seed_graph
-
-		while !@accusations.empty? do
-			g = @graph
-			@accusations.each_key do |accusation|
-				accuser = accusation[0]
-				accusee = accusation[1]
-
-				success = link_accuser accuser, accusee
-
-				if success
-					@accusations.delete accusation
-				end
-			end
+		accusees.each do |accusee|
+			fill_graph accusee
 		end
 	end
 
 	def print_accusations
-		@accusations.each_key do |accusation|
-			puts accusation.to_s
+		@accusations.each do |accuser, accusees|
+			puts accuser
+			accusees.each do |accusee|
+				puts '  ' + accusee
+			end
 		end
 	end
 
@@ -118,9 +72,16 @@ class LiarliarSolver
 
 		num_accusations.times do
 			accusee = file.gets.split[0]
-			accusation = [accuser, accusee]
-			@accusations[accusation] = 1
+			add_accusation accuser, accusee
 		end
+	end
+
+	def add_accusation accuser, accusee
+		if !@accusations.has_key? accuser
+			@accusations[accuser] = Array.new
+		end
+
+		@accusations[accuser].push accusee
 	end
 
 
@@ -128,3 +89,4 @@ end
 
 solver = LiarliarSolver.new ARGV[0]
 solution = solver.solve
+solver.print_accusations
