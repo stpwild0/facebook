@@ -6,13 +6,24 @@ class LiarliarSolver
 		@filename = filename
 		@accusations = Hash.new
 		@graph = Hash.new
+		@accuser_queue = Array.new
 	end
 
 	def solve
 		reset_counters
 		parse_input
-		first_accuser = seed_graph
-		fill_graph first_accuser
+		seed_graph
+		fill_graph
+
+		result_string
+	end
+
+	def result_string
+		result = [@group1, @group2]
+		result.sort!
+		result.reverse!
+
+		"%d %d" % [result[0], result[1]]
 	end
 
 	def reset_counters
@@ -20,28 +31,46 @@ class LiarliarSolver
 		@group2 = 0
 	end
 
-	def build_graph
+	def seed_graph
 		@accusations.each do |accuser, accusees|
 			@graph[accuser] = :group1
 			@group1 += 1
-			@accusations.delete accuser
-
-			return accuser
+			@accuser_queue.push accuser
+			return
 		end
 	end
 
-	def fill_graph accuser
-		if !@graph.has_key? accuser
+	def fill_graph
+		@accuser_queue.each do |accuser|
+			if !@accusations.has_key? accuser
+				next
+			end
+
+			accusees = @accusations[accuser]
+			accusees.each do |accusee|
+				link accuser, accusee
+			end
+
+			@accusations.delete accuser
+			
+			accusees.each do |accusee|
+				@accuser_queue.push accusee
+			end
+		end
+	end
+
+	def link accuser, accusee
+		if @graph.has_key? accusee
 			return
 		end
 
-		accusees = @graph[accuser]
-		accusees.each do |accusee|
-			link accuser, accusee
-		end
-
-		accusees.each do |accusee|
-			fill_graph accusee
+		accuser_group = @graph[accuser]
+		if accuser_group == :group1
+			@graph[accusee] = :group2
+			@group1 += 1
+		else
+			@graph[accusee] = :group1
+			@group2 += 1
 		end
 	end
 
@@ -63,6 +92,7 @@ class LiarliarSolver
 		num_accusers.times do
 			parse_accuser file
 		end
+
 	end
 
 	def parse_accuser file
@@ -73,6 +103,7 @@ class LiarliarSolver
 		num_accusations.times do
 			accusee = file.gets.split[0]
 			add_accusation accuser, accusee
+			add_accusation accusee, accuser
 		end
 	end
 
@@ -88,5 +119,4 @@ class LiarliarSolver
 end
 
 solver = LiarliarSolver.new ARGV[0]
-solution = solver.solve
-solver.print_accusations
+puts solver.solve
